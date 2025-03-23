@@ -1,0 +1,133 @@
+
+
+body {
+    margin: 10px;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(#2B7A78, #3AAFA9);
+}
+
+.outer-border {
+    border: 2px solid #DEF2F1;
+    min-height: auto;
+    min-width: 90%;
+    padding: 10px;
+    margin: 10px;
+}
+
+.mid-border {
+    border: 6px solid #DEF2F1;
+    min-height: 100%;
+    min-width: 96%;
+    padding: 6px;
+    padding-right: 10px;
+    margin: auto;
+}
+
+.inner-border {
+    position: relative;
+    border: 2px solid #DEF2F1;
+    min-height: 100%;
+    min-width: 100%;
+    margin: auto;
+}
+
+.logo {
+    text-align: center;
+    margin: 10px;
+}
+
+.logo img {
+    width: 350px;
+    height: 140px;
+}
+
+.signup-container {
+    max-width: 500px;
+    padding: 20px;
+    border-style: inset;
+    border-color: #DEF2F1;
+    border-width: 3px;
+    border-radius: 8px;
+    margin: 60px auto;
+    background-color: #FFFFFF;
+    /* White container background */
+    box-shadow: #240108 2px 3px 7px 2px;
+}
+
+/* ===================== SignUp Form ===================== */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* ===================== SignUp Button ===================== */
+.signup-btn {
+    color: #DEF2F1;
+    background-color: #3AAFA9;
+    border-style: inset;
+    border-color: #DEF2F1;
+    border-width: 2px;
+    border-radius: 5px;
+    padding: 9px;
+    cursor: pointer;
+    margin-left: 60px;
+    min-width: 76%;
+    font-size: 20px;
+    font-family: 'Times New Roman', Times, serif;
+    transition: all 0.2s ease-in-out;
+}
+
+
+
+/* ===================== Login Box ===================== */
+.login-container {
+    background-color: #FFFFFF;
+    text-decoration: black;
+    max-width: 220px;
+    max-height: auto;
+    /* White container background */
+    padding: 1px;
+    border-radius: 8px;
+    margin: 70px auto;
+    margin-bottom: calc(70vh - 500px);
+    box-shadow: #240108 2px 3px 7px 2px;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* ===================== Login Button ===================== */
+.login-btn {
+    background-color: #3AAFA9;
+    color: #DEF2F1;
+    padding: 6px 25px;
+    border-style: inset;
+    border-color: #DEF2F1;
+    border-width: 2px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 18px;
+    transition: all 0.2s ease-in-out;
+}
+
+.login-btn:hover,
+.signup-btn:hover {
+    background-color: #3AAFA9;
+    transform: scale(1.05);
+}
