@@ -16,7 +16,7 @@ A secure, user-authenticated file manager built with Python and Tkinter. This de
 - 🧵 Multithreaded upload for smoother performance
 
 #📂 File Structure
-.
+```.
 ├── main.py              # Main application script
 ├── file_manager.db      # SQLite database (auto-created)
 ├── encrypt.png          # Icon images used in GUI
@@ -26,4 +26,5 @@ A secure, user-authenticated file manager built with Python and Tkinter. This de
 ├── rename.png
 ├── preview.png
 └── README.md            # This file
+```
 
