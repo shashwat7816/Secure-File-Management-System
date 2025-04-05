@@ -283,6 +283,8 @@ encrypt_icon = ImageTk.PhotoImage(Image.open("encrypt.png").resize((30, 30)))
 decrypt_icon = ImageTk.PhotoImage(Image.open("decrypt.png").resize((30, 30)))
 upload_icon = ImageTk.PhotoImage(Image.open("upload.png").resize((30, 30)))
 delete_icon = ImageTk.PhotoImage(Image.open("delete.png").resize((30, 30)))
+rename_icon = ImageTk.PhotoImage(Image.open("rename.png").resize((30, 30)))
+preview_icon = ImageTk.PhotoImage(Image.open("preview.png").resize((30, 30)))
 
 title_label = tk.Label(root, text="Secure File Manager", font=("Helvetica", 30), fg="white", bg="black")
 title_label.pack(pady=10)
@@ -311,7 +313,7 @@ file_dropdown.pack(pady=10)
 upload_button = tk.Button(root, text="Upload File", command=threaded_upload,image=upload_icon, compound="left", font=("Arial", 18), bg="#4CAF50", fg="white")
 upload_button.pack(pady=5)
 
-preview_button = tk.Button(root, text="Preview File", command=preview_file, font=("Arial", 18), bg="#FF9800", fg="white")
+preview_button = tk.Button(root, text="Preview File", command=preview_file,image=preview_icon, compound="left", font=("Arial", 18), bg="#FF9800", fg="white")
 preview_button.pack(pady=5)
 
 auth_frame1 = tk.Frame(root, bg="black")
@@ -326,7 +328,7 @@ decrypt_button.grid(row=0, column=1, padx=(15),pady=15)
 delete_button = tk.Button(auth_frame1, text="Delete File", command=delete_file,image=delete_icon, compound="left", font=("Arial", 18), bg="#F44336", fg="white")
 delete_button.grid(row=1, column=0, padx=(15),pady=15)
 
-rename_button = tk.Button(auth_frame1, text="Rename File", command=rename_file, font=("Arial", 18), bg="#9C27B0", fg="white")
+rename_button = tk.Button(auth_frame1, text="Rename File", command=rename_file,image=rename_icon, compound="left", font=("Arial", 18), bg="#9C27B0", fg="white")
 rename_button.grid(row=1, column=1, padx=(15),pady=15)
 
 metadata_button = tk.Button(root, text="File Metadata", command=show_file_metadata, font=("Arial", 18), bg="#FF9800", fg="white",relief="flat",borderwidth=5,highlightthickness=0) 
