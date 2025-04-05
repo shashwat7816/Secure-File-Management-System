@@ -28,3 +28,15 @@ A secure, user-authenticated file manager built with Python and Tkinter. This de
 └── README.md            # This file
 ```
 
+## 🖼 Screenshot
+
+Light Mode:
+
+<p align="center">
+  <img src="screenshot.png" alt="App Screenshot" width="500"/>
+</p>
+
+
+*(Dark Mode will reflect when toggled)*
+
+---
