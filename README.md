@@ -1,4 +1,4 @@
-\# 🔐 Secure File Manager (Tkinter)
+## 🔐 Secure File Manager (Tkinter)
 
 A secure, user-authenticated file manager built with Python and Tkinter. This desktop application allows users to upload, encrypt, decrypt, preview, rename, and delete files—all while Storing Data securely in an SQLite database.
 
