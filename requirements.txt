@@ -1,0 +1,7 @@
+cryptography==41.0.3
+Pillow==10.0.0
+PyMuPDF==1.22.5
+bcrypt==4.0.1
+psutil==5.9.5
+flask==2.3.3
+gunicorn==21.2.0
