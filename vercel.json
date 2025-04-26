@@ -9,11 +9,13 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/api/index.py"
+      "dest": "api/index.py"
     }
   ],
   "env": {
     "VERCEL": "1",
-    "PYTHONUNBUFFERED": "1"
+    "PYTHONUNBUFFERED": "1",
+    "FLASK_ENV": "production",
+    "FLASK_DEBUG": "0"
   }
 }
