@@ -13,7 +13,14 @@ app = Flask(__name__)
 
 # Initialize database
 def init_db():
-    conn = sqlite3.connect("file_manager.db")
+    # For Vercel deployment, use in-memory database
+    # This is a temporary solution - data will be lost on restart
+    # For production, consider using a database service like PostgreSQL, MongoDB, etc.
+    if 'VERCEL' in os.environ:
+        conn = sqlite3.connect(":memory:")
+    else:
+        # For local development, use file-based database
+        conn = sqlite3.connect("file_manager.db")
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
