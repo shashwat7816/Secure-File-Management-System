@@ -5,3 +5,4 @@ bcrypt==4.0.1
 psutil==5.9.5
 flask==2.3.3
 uvicorn==0.23.2
+os
