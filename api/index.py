@@ -187,13 +187,10 @@ def logout():
 
 @app.route('/api/status')
 def status():
-    session_id = request.cookies.get('session_id')
-    if session_id and session_id in sessions:
-        return jsonify({
-            'logged_in': True, 
-            'username': sessions[session_id]['username']
-        })
-    return jsonify({'logged_in': False})
+    return jsonify({
+        "status": "ok",
+        "environment": "Vercel"
+    })
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -424,13 +421,14 @@ def debug_info():
     return jsonify(debug_data)
 
 # Catch-all route to handle all other paths
+@app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
-    try:
-        return render_template('index.html')
-    except Exception as e:
-        logger.error(f"Error in catch-all route ({path}): {e}")
-        return jsonify({"error": str(e)}), 500
+    return jsonify({
+        "status": "alive",
+        "message": "API is running on Vercel",
+        "path": path
+    })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
