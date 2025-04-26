@@ -10,8 +10,10 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            line-height: 1.6;
         }
         h1 {
+            color: #333;
             text-align: center;
         }
         .login-form, .register-form, .file-actions {
@@ -34,10 +36,25 @@
         .hidden {
             display: none;
         }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
     <h1>Secure File Management System</h1>
+    
+    <div class="container">
+        <h2>Welcome</h2>
+        <p>This is a basic version of the Secure File Management System.</p>
+        <p>Status: The application is running on Vercel.</p>
+        
+        <p>For troubleshooting, visit the <a href="/debug">/debug</a> endpoint.</p>
+    </div>
     
     <div id="auth-status">Loading...</div>
     
