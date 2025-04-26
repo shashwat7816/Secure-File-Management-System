@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template, send_file, abort
 import sqlite3
 import os
 import bcrypt
@@ -6,80 +6,122 @@ import base64
 import hashlib
 import io
 import datetime
+import logging
 from cryptography.fernet import Fernet
 from werkzeug.utils import secure_filename
 
-# Make sure templates are properly located
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Check for templates directory
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
-app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
-# Make the database connection more resilient
-def get_db_connection():
-    try:
-        if 'VERCEL' in os.environ:
-            # Use in-memory database for Vercel
-            conn = sqlite3.connect(":memory:")
-            # Initialize this connection if needed
-            init_single_conn(conn)
-        else:
-            # For local development, use file-based database
-            conn = sqlite3.connect("file_manager.db")
-        return conn
-    except Exception as e:
-        print(f"Database connection error: {str(e)}")
-        # Return a basic connection that will fail gracefully
-        return sqlite3.connect(":memory:")
+# Create templates directory if it doesn't exist
+if not os.path.exists(template_dir):
+    os.makedirs(template_dir)
+    logger.info(f"Created template directory: {template_dir}")
 
-# Initialize a single connection (for in-memory db)
-def init_single_conn(conn):
-    cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT UNIQUE,
-                        password TEXT
-                    )''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS files (
-                    id INTEGER PRIMARY KEY,
-                    user_id INTEGER,
-                    file_name TEXT,
-                    file_data BLOB,
-                    file_size INTEGER,
-                    file_type TEXT,
-                    action TEXT,
-                    timestamp TEXT,
-                    FOREIGN KEY(user_id) REFERENCES users(id)
-                )''')
-    conn.commit()
+# Create a simple index.html file if not exists
+index_html_path = os.path.join(template_dir, 'index.html')
+if not os.path.exists(index_html_path):
+    with open(index_html_path, 'w') as f:
+        f.write("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Secure File Management System</title>
+        </head>
+        <body>
+            <h1>Secure File Management System</h1>
+            <p>Welcome to the Secure File Management System.</p>
+        </body>
+        </html>
+        """)
+    logger.info(f"Created index.html at: {index_html_path}")
+
+# Create Flask app
+app = Flask(__name__, 
+            template_folder=template_dir, 
+            static_folder=static_dir)
+app.config['PROPAGATE_EXCEPTIONS'] = True
+
+# Error handlers
+@app.errorhandler(500)
+def handle_500(error):
+    logger.error(f"500 error: {error}")
+    return jsonify({"error": "Internal Server Error", "message": str(error)}), 500
+
+@app.errorhandler(404)
+def handle_404(error):
+    logger.error(f"404 error: {error}")
+    return jsonify({"error": "Not Found", "message": str(error)}), 404
 
 # Initialize database
 def init_db():
-    conn = get_db_connection()
-    init_single_conn(conn)
-    conn.close()
+    try:
+        # For Vercel deployment, use in-memory database
+        # This is a temporary solution - data will be lost on restart
+        # For production, consider using a database service like PostgreSQL, MongoDB, etc.
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            # For local development, use file-based database
+            conn = sqlite3.connect("file_manager.db")
+        cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            username TEXT UNIQUE,
+                            password TEXT
+                        )''')
+        cursor.execute('''CREATE TABLE IF NOT EXISTS files (
+                        id INTEGER PRIMARY KEY,
+                        user_id INTEGER,
+                        file_name TEXT,
+                        file_data BLOB,
+                        file_size INTEGER,
+                        file_type TEXT,
+                        action TEXT,
+                        timestamp TEXT,
+                        FOREIGN KEY(user_id) REFERENCES users(id)
+                    )''')
+        conn.commit()
+        conn.close()
+        logger.info("Database initialized successfully")
+        
+        # Create a test user for Vercel environments
+        if 'VERCEL' in os.environ:
+            try:
+                conn = sqlite3.connect(":memory:")
+                cursor = conn.cursor()
+                hashed_password = bcrypt.hashpw("testuser123".encode('utf-8'), bcrypt.gensalt())
+                cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
+                            ("testuser", hashed_password))
+                conn.commit()
+                conn.close()
+                logger.info("Created test user for Vercel environment")
+            except Exception as e:
+                logger.error(f"Error creating test user: {e}")
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+        raise
 
-init_db()
+try:
+    init_db()
+except Exception as e:
+    logger.error(f"Failed to initialize database: {e}")
 
 # Session management (simple implementation for demonstration)
 sessions = {}
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-@app.errorhandler(500)
-def server_error(e):
-    return jsonify({
-        "error": "Internal Server Error",
-        "message": "An error occurred on the server. Please try again later."
-    }), 500
-
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({
-        "error": "Not Found",
-        "message": "The requested resource was not found."
-    }), 404
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        logger.error(f"Error in index route: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -93,7 +135,7 @@ def register():
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     
     try:
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
                      (username, hashed_password))
@@ -115,7 +157,7 @@ def login():
         return jsonify({'success': False, 'message': 'Username and password are required'})
     
     try:
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute("SELECT id, password FROM users WHERE username = ?", (username,))
         result = cursor.fetchone()
@@ -172,7 +214,7 @@ def upload_file():
         file_size = len(file_data)
         file_type = file.content_type or 'application/octet-stream'
         
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO files (user_id, file_name, file_data, file_size, file_type, action, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -193,7 +235,7 @@ def get_files():
         return jsonify({'success': False, 'message': 'Please login first'})
     
     try:
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_name FROM files WHERE user_id = ?", 
@@ -217,7 +259,7 @@ def download_file():
         return jsonify({'success': False, 'message': 'Filename is required'})
     
     try:
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data, file_type FROM files WHERE file_name = ? AND user_id = ?", 
@@ -259,7 +301,7 @@ def delete_file():
         return jsonify({'success': False, 'message': 'Filename is required'})
     
     try:
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "DELETE FROM files WHERE file_name = ? AND user_id = ?", 
@@ -286,7 +328,7 @@ def encrypt_file():
         return jsonify({'success': False, 'message': 'Filename and password are required'})
     
     try:
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data FROM files WHERE file_name = ? AND user_id = ?", 
@@ -332,7 +374,7 @@ def decrypt_file():
         return jsonify({'success': False, 'message': 'Filename and password are required'})
     
     try:
-        conn = get_db_connection()
+        conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data FROM files WHERE file_name = ? AND user_id = ?", 
@@ -368,10 +410,27 @@ def decrypt_file():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Decryption failed: {str(e)}'})
 
-# Add this to make it work with Vercel
+@app.route('/debug')
+def debug_info():
+    """Route to show debug info for troubleshooting"""
+    debug_data = {
+        'template_dir': template_dir,
+        'template_dir_exists': os.path.exists(template_dir),
+        'index_html_exists': os.path.exists(os.path.join(template_dir, 'index.html')),
+        'static_dir': static_dir,
+        'static_dir_exists': os.path.exists(static_dir),
+        'env_vars': {k: v for k, v in os.environ.items() if not k.startswith('AWS_') and not k.startswith('VERCEL_')}
+    }
+    return jsonify(debug_data)
+
+# Catch-all route to handle all other paths
 @app.route('/<path:path>')
 def catch_all(path):
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        logger.error(f"Error in catch-all route ({path}): {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
