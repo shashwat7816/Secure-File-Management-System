@@ -14,16 +14,25 @@ template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'te
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
-# Initialize database
-def init_db():
-    # For Vercel deployment, use in-memory database
-    # This is a temporary solution - data will be lost on restart
-    # For production, consider using a database service like PostgreSQL, MongoDB, etc.
-    if 'VERCEL' in os.environ:
-        conn = sqlite3.connect(":memory:")
-    else:
-        # For local development, use file-based database
-        conn = sqlite3.connect("file_manager.db")
+# Make the database connection more resilient
+def get_db_connection():
+    try:
+        if 'VERCEL' in os.environ:
+            # Use in-memory database for Vercel
+            conn = sqlite3.connect(":memory:")
+            # Initialize this connection if needed
+            init_single_conn(conn)
+        else:
+            # For local development, use file-based database
+            conn = sqlite3.connect("file_manager.db")
+        return conn
+    except Exception as e:
+        print(f"Database connection error: {str(e)}")
+        # Return a basic connection that will fail gracefully
+        return sqlite3.connect(":memory:")
+
+# Initialize a single connection (for in-memory db)
+def init_single_conn(conn):
     cursor = conn.cursor()
     cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,6 +51,11 @@ def init_db():
                     FOREIGN KEY(user_id) REFERENCES users(id)
                 )''')
     conn.commit()
+
+# Initialize database
+def init_db():
+    conn = get_db_connection()
+    init_single_conn(conn)
     conn.close()
 
 init_db()
@@ -52,6 +66,20 @@ sessions = {}
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({
+        "error": "Internal Server Error",
+        "message": "An error occurred on the server. Please try again later."
+    }), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({
+        "error": "Not Found",
+        "message": "The requested resource was not found."
+    }), 404
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -65,11 +93,7 @@ def register():
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     
     try:
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
                      (username, hashed_password))
@@ -91,11 +115,7 @@ def login():
         return jsonify({'success': False, 'message': 'Username and password are required'})
     
     try:
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT id, password FROM users WHERE username = ?", (username,))
         result = cursor.fetchone()
@@ -152,11 +172,7 @@ def upload_file():
         file_size = len(file_data)
         file_type = file.content_type or 'application/octet-stream'
         
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO files (user_id, file_name, file_data, file_size, file_type, action, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -177,11 +193,7 @@ def get_files():
         return jsonify({'success': False, 'message': 'Please login first'})
     
     try:
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_name FROM files WHERE user_id = ?", 
@@ -205,11 +217,7 @@ def download_file():
         return jsonify({'success': False, 'message': 'Filename is required'})
     
     try:
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data, file_type FROM files WHERE file_name = ? AND user_id = ?", 
@@ -251,11 +259,7 @@ def delete_file():
         return jsonify({'success': False, 'message': 'Filename is required'})
     
     try:
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "DELETE FROM files WHERE file_name = ? AND user_id = ?", 
@@ -282,11 +286,7 @@ def encrypt_file():
         return jsonify({'success': False, 'message': 'Filename and password are required'})
     
     try:
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data FROM files WHERE file_name = ? AND user_id = ?", 
@@ -332,11 +332,7 @@ def decrypt_file():
         return jsonify({'success': False, 'message': 'Filename and password are required'})
     
     try:
-        # Use in-memory database on Vercel
-        if 'VERCEL' in os.environ:
-            conn = sqlite3.connect(":memory:")
-        else:
-            conn = sqlite3.connect("file_manager.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data FROM files WHERE file_name = ? AND user_id = ?", 
