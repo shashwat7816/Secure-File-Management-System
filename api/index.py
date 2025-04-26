@@ -62,7 +62,11 @@ def register():
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     
     try:
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
                      (username, hashed_password))
@@ -84,7 +88,11 @@ def login():
         return jsonify({'success': False, 'message': 'Username and password are required'})
     
     try:
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute("SELECT id, password FROM users WHERE username = ?", (username,))
         result = cursor.fetchone()
@@ -141,7 +149,11 @@ def upload_file():
         file_size = len(file_data)
         file_type = file.content_type or 'application/octet-stream'
         
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO files (user_id, file_name, file_data, file_size, file_type, action, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -162,7 +174,11 @@ def get_files():
         return jsonify({'success': False, 'message': 'Please login first'})
     
     try:
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_name FROM files WHERE user_id = ?", 
@@ -186,7 +202,11 @@ def download_file():
         return jsonify({'success': False, 'message': 'Filename is required'})
     
     try:
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data, file_type FROM files WHERE file_name = ? AND user_id = ?", 
@@ -228,7 +248,11 @@ def delete_file():
         return jsonify({'success': False, 'message': 'Filename is required'})
     
     try:
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "DELETE FROM files WHERE file_name = ? AND user_id = ?", 
@@ -255,7 +279,11 @@ def encrypt_file():
         return jsonify({'success': False, 'message': 'Filename and password are required'})
     
     try:
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data FROM files WHERE file_name = ? AND user_id = ?", 
@@ -301,7 +329,11 @@ def decrypt_file():
         return jsonify({'success': False, 'message': 'Filename and password are required'})
     
     try:
-        conn = sqlite3.connect("file_manager.db")
+        # Use in-memory database on Vercel
+        if 'VERCEL' in os.environ:
+            conn = sqlite3.connect(":memory:")
+        else:
+            conn = sqlite3.connect("file_manager.db")
         cursor = conn.cursor()
         cursor.execute(
             "SELECT file_data FROM files WHERE file_name = ? AND user_id = ?", 
